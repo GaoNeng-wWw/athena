@@ -1,0 +1,21 @@
+{
+  "name": "athena",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "tsup": "^8.2.1"
+  },
+  "devDependencies": {
+    "@gaonengwww/eslint-config": "^1.0.2",
+    "@types/node": "^20.14.11",
+    "eslint": "9.7.0"
+  }
+}
