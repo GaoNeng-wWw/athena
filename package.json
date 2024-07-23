@@ -1,10 +1,10 @@
 {
-  "name": "athena",
   "version": "1.0.0",
   "description": "",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "vitest",
+    "test:cov": "vitest --coverage",
     "lint": "eslint ."
   },
   "keywords": [],
@@ -16,6 +16,8 @@
   "devDependencies": {
     "@gaonengwww/eslint-config": "^1.0.2",
     "@types/node": "^20.14.11",
-    "eslint": "9.7.0"
+    "@vitest/coverage-v8": "^2.0.4",
+    "eslint": "9.7.0",
+    "vitest": "^2.0.4"
   }
 }
