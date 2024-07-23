@@ -109,7 +109,7 @@ export class Tick{
   active(name: string){
     return this.timers.has(name);
   }
-  adjust(name: string, time: string){
+  adjust(name: string, time: string | number){
     const timer = this.timers.get(name);
     if (!timer){
       return this;
@@ -117,7 +117,7 @@ export class Tick{
     const interval = timer.clear === unsetInterval;
     timer.clear?.(timer.timer);
     timer.start = +new Date()
-    timer.duration = ms(time);
+    timer.duration = typeof time === 'string' ? ms(time) : time;
     const f = interval ? setInterval : setTimeout;
     timer.timer = f(this.tock(name, !interval), timer.duration);
     return this;
