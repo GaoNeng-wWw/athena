@@ -1,46 +1,45 @@
-import { time } from "console";
 import ms from "ms";
 
 function unsetTimeout(id: string | number | NodeJS.Timeout | undefined) { clearTimeout(id); }
 function unsetInterval(id: string | number | NodeJS.Timeout | undefined) { clearInterval(id); }
 function unsetImmediate(id: NodeJS.Immediate | undefined) { clearImmediate(id); }
 
-class Timer {
+export class Timer {
   public start: number;
   public duration: any;
   public clear:Function | null;
   public timer: object | null;
   public fns: Function[] | null
   constructor(
-    timer: object,
-    clear: Function,
-    duration: any,
-    fn: Function
+    timer?: object,
+    clear?: Function,
+    duration?: any,
+    fn?: Function
   ) {
-    this.start = new Date().getTime();
-    this.timer = timer;
-    this.clear = clear;
-    this.fns =[fn];
+    this.start = +new Date();
+    this.timer = timer ?? null;
+    this.clear = clear ?? null;
+    this.fns = fn ? [fn] : [];
     this.duration = duration;
   }
   remaining(){
     return this.duration - this.taken();
   }
   taken(){
-    return new Date().getTime() - this.start;
+    return +new Date() - this.start;
   }
 }
 
 export class Tick{
-  private ctx: object;
-  private timers: Map<string, Timer>
+  public ctx: object;
+  public timers: Map<string, Timer>
   constructor(
     ctx?: object
   ){
     this.ctx=ctx??this;
     this.timers = new Map();
   }
-  private tock(
+  tock(
     name:string,
     clear:boolean
   ){
@@ -51,44 +50,41 @@ export class Tick{
       const timer = this.timers.get(name)!;
       const fns = [...timer.fns ?? []];
       if (clear){
+        this.clear(name);
       }else{
-        timer.start = new Date().getTime();
+        timer.start = +new Date()
       }
       for (let i=0;i<fns.length;i++){
         fns[i].call(this.ctx);
       }
     }
   }
-  setTimeout(name:string,fn:Function,time: string){
+  setTimeout(name:string,fn:Function,time: string | number){
     if (this.timers.get(name)){
       this.timers.get(name)?.fns?.push(fn);
       return this;
     }
-    const d = ms(time);
+    const d = typeof time === 'string' ? ms(time) : time;
     this.timers.set(
       name,
       new Timer(
-        setTimeout(() => {
-          this.tock(name,true)
-        }, d),
+        setTimeout(this.tock(name,false), d),
         unsetTimeout,
         d,
         fn
       )
     )
   }
-  setInterval(name:string,fn:Function,time: string){
+  setInterval(name:string,fn:Function,time: string | number){
     if (this.timers.get(name)){
       this.timers.get(name)?.fns?.push(fn);
       return this;
     }
-    const d = ms(time);
+    const d = typeof time === 'string' ? ms(time) : time;
     this.timers.set(
       name,
       new Timer(
-        setInterval(() => {
-          this.tock(name,true)
-        }, d),
+        setInterval(this.tock(name,false), d),
         unsetInterval,
         d,
         fn
@@ -120,7 +116,7 @@ export class Tick{
     }
     const interval = timer.clear === unsetInterval;
     timer.clear?.(timer.timer);
-    timer.start = new Date().getTime();
+    timer.start = +new Date()
     timer.duration = ms(time);
     const f = interval ? setInterval : setTimeout;
     timer.timer = f(this.tock(name, !interval), timer.duration);
@@ -138,11 +134,7 @@ export class Tick{
   public clear(..._names: string[]){
     const names:string[] = [..._names];
     if (!names.length){
-      for (const timer in this.timers) {
-        if (Object.hasOwn(this.timers, timer)){
-          names.push(timer);
-        }
-      }
+      names.push(...Array.from(this.timers.keys()));
     }
     for (let i=0;i<names.length;i++){
       const name = names[i];
