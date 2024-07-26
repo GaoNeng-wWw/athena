@@ -1,5 +1,3 @@
-import {curry} from '@utils-plus/fp';
-
 export const one =  (f: Function) => {
   let called = false;
   let value:unknown;
