@@ -163,7 +163,6 @@ export class Log<K=any,V=any,E=Error> {
         limit: 1
       })
         .on('data', data => {
-          console.log(data);
           hasResolved = true;
           entry = data.value;
         })
