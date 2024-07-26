@@ -17,6 +17,8 @@ export interface StreamCondition {
   reverse: boolean,
   limit: number,
   lt: number,
+  gte: number;
+  lte: number;
 }
 export interface ReadStream<V=string,E=Error> {
   data: (data: {value:V})=>void;
@@ -86,9 +88,9 @@ export class Entry<U> implements IEntry<U> {
 }
 
 export class Log {
-  private node:Node;
-  private storage:Storage;
-  private committedIndex: number=0;
+  public node:Node;
+  public storage:Storage;
+  public committedIndex: number=0;
   constructor(
     node:Node,
     storage:Storage
@@ -219,9 +221,7 @@ export class Log {
     try {
       entry = await this.get(index);
     } catch {
-      return {
-        response: []
-      }
+      return new Entry(index, 0, false, [], '');
     }
 
     const entryIndex = entry.response.findIndex(resp => resp.address === address);
@@ -246,5 +246,25 @@ export class Log {
   }
   clone(node:Node, storage:Storage){
     return new Log(node, storage);
+  }
+  getUncommittedEntriesUpToIndex(index: number){
+    return new Promise<Entry<any>[]>((resolve,reject) => {
+      const entries: Entry<any>[] = [];
+      this.storage.readStream<Entry<any>, Error>({
+        gt: this.committedIndex,
+        lte: index
+      })
+      .on('data', (data)=>{
+        if (!data.value.committed){
+          entries.push(data.value);
+        }
+      })
+      .on('error', (err)=>{
+        reject(err);
+      })
+      .on('end',()=>{
+        resolve(entries);
+      })
+    })
   }
 }

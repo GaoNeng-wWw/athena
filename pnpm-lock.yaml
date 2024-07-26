@@ -46,6 +46,9 @@ importers:
       '@types/uuid':
         specifier: ^10.0.0
         version: 10.0.0
+      '@utils-plus/fp':
+        specifier: 0.0.1-rc.6
+        version: 0.0.1-rc.6
 
   packages/skiff-algorithm:
     dependencies:
@@ -652,6 +655,12 @@ packages:
   '@typescript-eslint/visitor-keys@7.16.1':
     resolution: {integrity: sha512-Qlzzx4sE4u3FsHTPQAAQFJFNOuqtuY0LFrZHwQ8IHK705XxBiWOFkfKRWu6niB7hwfgnwIpO4jTC75ozW1PHWg==}
     engines: {node: ^18.18.0 || >=20.0.0}
+
+  '@utils-plus/fp@0.0.1-rc.6':
+    resolution: {integrity: sha512-qn3IkI52JAiTVRj76Ehdybaf1oKv8a6z5Aohv49o+B7wPsv4Ry5pj/lXFbL8fcPHfgkhc4blYoOkkKK9xeO0XA==}
+
+  '@utils-plus/type@0.0.1-rc.6':
+    resolution: {integrity: sha512-rv/ulnW2SMvqDJRqUEUNufITUwiXNTGN24PmbrM5X1LfYqO/+jjw0uXT+G+ROu9Rll3CFxEgiYNA64jh8zIx9w==}
 
   '@vitest/coverage-v8@2.0.4':
     resolution: {integrity: sha512-i4lx/Wpg5zF1h2op7j0wdwuEQxaL/YTwwQaKuKMHYj7MMh8c7I4W7PNfOptZBCSBZI0z1qwn64o0pM/pA8Tz1g==}
@@ -2906,6 +2915,12 @@ snapshots:
     dependencies:
       '@typescript-eslint/types': 7.16.1
       eslint-visitor-keys: 3.4.3
+
+  '@utils-plus/fp@0.0.1-rc.6':
+    dependencies:
+      '@utils-plus/type': 0.0.1-rc.6
+
+  '@utils-plus/type@0.0.1-rc.6': {}
 
   '@vitest/coverage-v8@2.0.4(vitest@2.0.4(@types/node@20.14.11))':
     dependencies:

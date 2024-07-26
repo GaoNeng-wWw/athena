@@ -48,7 +48,9 @@ interface Packet {
   type: string,
   leader: string,
   last: any;
-  data: object | null
+  data: {
+    [x:string | number]: any
+  } | null
 }
 interface WrappedPacket<T=any,D=object> {
   state: State,
@@ -101,13 +103,168 @@ export class Node extends EventEmitter {
     this.state = opts.state ?? State.FOLLOWER;
     this.leader = '';
     this.term = 0;
+    this._init(opts);
+  }
+  private _init(options: Partial<Options> = {}){
     this.on('term change', ()=>{
       this.votes.for = null;
       this.votes.granted = 0;
     })
     this.on('state change', (state)=>{
-
+      this.timer.clear('heartbeat', 'election');
+      this.heartbeat(
+        this.state === State.LEADER ? this.beat : this.timeout()
+      );
+      this.emit(
+        State[state].toLowerCase()
+      );
     })
+    this.on('data', async (packet:Packet, write)=>{
+      write = write ?? (()=>{});
+      let reason;
+      if (this.type(packet) !== 'object'){
+        reason = 'Invalid packet';
+        this.emit('error', new Error(reason));
+        return write(await this.packet('error', reason))
+      }
+      if (packet.term > this.term) {
+        this.change({
+          leader: packet.state === State.LEADER ? packet.address : packet.leader ?? this.leader,
+          state: State.FOLLOWER,
+          term: packet.term,
+        })
+      }
+      if (packet.term < this.term){
+        reason = `Received term ${packet.term}, but we are at ${this.term}`;
+        this.emit('error', new Error(reason));
+        return write(this.packet('error', reason));
+      }
+      if (packet.state === State.LEADER) {
+        if (this.state !== State.FOLLOWER){
+          this.change({state:State.FOLLOWER});
+        }
+        if(packet.address !== this.leader){
+          this.change({leader: packet.address})
+        }
+        this.heartbeat(this.timeout());
+      }
+      switch (packet.type.toLowerCase()) {
+        case 'vote': {
+          if (this.votes.for && this.votes.for !== packet.address){
+            this.emit('vote', packet);
+            return write(await this.packet('voted', { granted: false }), false)
+          }
+
+          if (this.log) {
+            const {index,term} = await this.log.getLastInfo();
+            if (index > packet.last.index && term > packet.last.term){
+              this.emit('vote', packet, false);
+              return write(await this.packet('voted', { granted: false }));
+            }
+          }
+
+          this.votes.for = packet.address;
+          this.emit('vote', packet, true);
+          this.change({leader: packet.address, term: packet.term});
+          write(await this.packet('voted', { granted: true }));
+
+          this.heartbeat(this.timeout());
+          break;
+        }
+
+        case 'voted': {
+          if (this.state !== State.CANDIDATE){
+            return write(await this.packet('error', 'No longer a candidate, ignoring vote'));
+          }
+
+          if (packet.data?.granted){
+            this.votes.granted ++;
+          }
+
+          if (this.quorum(this.votes.granted)){
+            this.change({leader: this.address, state: State.LEADER});
+            this.message(State.FOLLOWER, await this.packet('append'), ()=>{});
+          }
+
+
+          write();
+          break
+        }
+
+        case 'error': {
+          this.emit('error', new Error(JSON.stringify(packet.data)));
+        }
+
+        case 'append': {
+          const {index} = await this.log.getLastInfo();
+          if (index !== packet.last.index && packet.last.index !== 0){
+            const hasLog = await this.log.has(packet.last.index);
+            if (hasLog){
+              this.log.remoevEntriesAfter(packet.last.index);
+            } else {
+              const appendFail = await this.packet('append fail', {
+                term: packet.last.term,
+                index: packet.last.index
+              })
+              return this.message(State.LEADER, await this.packet('append fail', appendFail), ()=>{});
+            }
+          }
+
+          if (packet.data){
+            const entry = packet.data[0];
+            await this.log.saveCommand(entry.command, entry.term, entry.index);
+
+            const appendAck = await this.packet('append ack', {
+              term: entry.term,
+              index: entry.index
+            })
+            this.message(this.leader, appendAck, ()=>{});
+          }
+
+          if (this.log.committedIndex < packet.last.committedIndex) {
+            const entries = await this.log.getUncommittedEntriesUpToIndex(packet.last.committedIndex);
+            this.commitEntries(entries);
+          }
+
+          break;
+        }
+
+        case 'append ack': {
+          const entry = await this.log.commandAck(packet.data!.index, packet.address);
+          if (this.quorum(entry.response.length) && !entry.committed){
+            const entries = await this.log.getUncommittedEntriesUpToIndex(entry.index);
+            this.commitEntries(entries);
+          }
+          break;
+        }
+
+        case 'append fail': {
+          const prevEntry = await this.log.get<any>(packet.data!.index);
+          const append = await this.appendPacket(prevEntry);
+          write(append);
+          break;
+        }
+
+        case 'exec': {
+          break;
+        }
+
+        default: {
+          if (this.listeners('rpc').length){
+            this.emit('rpc', packet, write);
+          } else {
+            write(await this.packet('error', `Unknown message type: ${packet.type}`));
+          }
+          break;
+        }
+      }
+    })
+    if (this.state === State.CHILD) {
+      return this.emit('initialize')
+    }
+    
+    this.emit('initialize')
+    this.heartbeat(this.timeout())
   }
   setLog(log: Log){
     this.log = log;
@@ -124,9 +281,29 @@ export class Node extends EventEmitter {
   majority() {
     return Math.ceil(this.nodes.length / 2)+1;
   }
-  indefinitely(attempt: any, fn: any, timeout: any) {
-    const id = uuid();
-    
+  indefinitely(attempt?: Function, fn?: Function, timeout?: number) {
+    this.try(attempt, fn, timeout)
+  }
+  private try(attempt?:Function ,fn?: Function, timeout?: number | number){
+    const uid = uuid();
+    const next = one((err:Error, data: any)=>{
+      if (!this.timer){
+        return;
+      }
+      this.timer.setImmediate(`${uid}@async`, ()=>{
+        if (err){
+          this.emit('error', err);
+          return this.try();
+        }
+        fn?.(data);
+      })
+    })
+    attempt?.call(this,next);
+    this.timer.setTimeout(uid, ()=>{
+      next(
+        new Error('Timeout, please try agin')
+      )
+    }, +(timeout ?? this.timeout()));
   }
   heartbeat(duration: string|number) {
     if (this.timer.active('heartbeat')){
