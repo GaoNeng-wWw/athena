@@ -39,14 +39,14 @@ export interface On<V=string,E=Error> {
   )
 }
 
-export interface Storage<KD=string,VD=string> {
-  get: <K=KD,V=VD>(key: K)=>Promise<V>
-  put: <K=KD,V=VD>(key:K, value:V)=>Promise<V>;
-  getMany: <K=KD,V=VD>(key:K, start?: number, limit?: number) => Promise<V[]>;
-  readStream: <V=string,E=Error>(condition: Partial<StreamCondition>)=>On<V,E>;
-  close: () => boolean;
-  remove: <K=KD>(key: K) => Promise<void>;
-  has: <K = KD>(key:K) => Promise<boolean>;
+export abstract class Storage<K=any, V=any, E=Error> {
+  abstract get(key: K):Promise<V> | V;
+  abstract put(key:K, value: V): Promise<V> | V;
+  abstract getMany(start?:number, limit?:number):Promise<V[]> | V[];
+  abstract readStream<V, E=Error>(condition: Partial<StreamCondition>):On<V,E>;
+  abstract close():Promise<boolean> | boolean;
+  abstract remove(key:K):Promise<void>|void;
+  abstract has(key:K):Promise<boolean>|boolean
 };
 
 export class Entry<U> implements IEntry<U> {
@@ -87,7 +87,7 @@ export class Entry<U> implements IEntry<U> {
   }
 }
 
-export class Log {
+export class Log<K=any,V=any,E=Error> {
   public node:Node;
   public storage:Storage;
   public committedIndex: number=0;
@@ -132,7 +132,7 @@ export class Log {
       })
     })
   }
-  async remoevEntriesAfter(index: number){
+  async removeEntriesAfter(index: number){
     const entries = await this.getEntriesAfter(index);
     return Promise.all(
       entries.map(entry => {
@@ -143,10 +143,10 @@ export class Log {
   async has(index: number){
     return await this.storage.has(index);
   }
-  async get<T>(index: number){
-    return this.storage.get<number, IEntry<T>>(index);
+  async get<T>(index: number): Promise<T>{
+    return this.storage.get(index);
   }
-    async getLastInfo(){
+  async getLastInfo(){
     const {index, term} = await this.getLastEntry();
     return {
       index,
@@ -163,6 +163,7 @@ export class Log {
         limit: 1
       })
         .on('data', data => {
+          console.log(data);
           hasResolved = true;
           entry = data.value;
         })
@@ -219,7 +220,7 @@ export class Log {
   async commandAck(index: number, address: string){
     let entry;
     try {
-      entry = await this.get(index);
+      entry = await this.get<Entry<any>>(index);
     } catch {
       return new Entry(index, 0, false, [], '');
     }
@@ -236,7 +237,7 @@ export class Log {
   }
   async commit(idx: number){
 
-    const entry = await this.storage.get<number, IEntry<any>>(idx);
+    const entry = await this.storage.get(idx) as IEntry;
     entry.committed = true;
     this.committedIndex = entry.index;
     return this.put(entry);

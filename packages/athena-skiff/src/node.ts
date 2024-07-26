@@ -200,7 +200,7 @@ export class Node extends EventEmitter {
           if (index !== packet.last.index && packet.last.index !== 0){
             const hasLog = await this.log.has(packet.last.index);
             if (hasLog){
-              this.log.remoevEntriesAfter(packet.last.index);
+              this.log.removeEntriesAfter(packet.last.index);
             } else {
               const appendFail = await this.packet('append fail', {
                 term: packet.last.term,
