@@ -68,6 +68,7 @@ export class Raftnode {
     stateMachine: StateMachine,
     store: BaseStore<any, any>,
     server: Server,
+    factory: (id: string) => Peer,
     electionOptions: ElectionOptions = {
       min: 150,
       max: 300
@@ -76,7 +77,6 @@ export class Raftnode {
       min: 100,
       max: 100
     },
-    factory: (id: string) => Peer,
     leader: boolean=false,
   ){
     this.id = id;

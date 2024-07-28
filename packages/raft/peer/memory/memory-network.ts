@@ -1,14 +1,15 @@
+import type { Server } from "../../server";
 import type { Command } from "../../command";
 import type { ClientQueryResponse, ClientRequestResponse, Query } from "../../query";
 import type { AppendEntryRequest, AppendEntryResponse } from "../../rpc/AppendEntries";
 import type { AddServer, LeaveServer, MemberShipChangeResponse } from "../../rpc/membership";
 import type { RequestVote, RequestVoteResponse } from "../../rpc/RequestVote";
+import type { BaseNetwork } from "../network";
 import type { MemoryServer } from "./memory-server";
 
-export class MemoryNetwork {
-  public nodes: Record<string, MemoryServer> = {};
-  private static instance: MemoryNetwork | undefined = undefined;
-  private constructor() {}
+export class MemoryNetwork implements BaseNetwork {
+  public nodes: Map<string, Server> = new Map();
+  public static instance: MemoryNetwork | undefined = undefined;
 
   public static getNetwork() {
     if (!this.instance) {
@@ -27,7 +28,7 @@ export class MemoryNetwork {
     nodeId: string,
     request: RequestVote
   ): Promise<RequestVoteResponse> {
-    const response = await this.nodes[nodeId].RequestVote(request);
+    const response = await this.nodes.get(nodeId)!.RequestVote(request);
     return response;
   }
 
@@ -35,7 +36,7 @@ export class MemoryNetwork {
     nodeId: string,
     request: AppendEntryRequest
   ): Promise<AppendEntryResponse> {
-    const response = await this.nodes[nodeId].AppendEntries(request);
+    const response = await this.nodes.get(nodeId)!.AppendEntries(request);
     return response;
   }
 
@@ -43,7 +44,7 @@ export class MemoryNetwork {
     nodeId: string,
     request: AddServer
   ): Promise<MemberShipChangeResponse> {
-    const response = await this.nodes[nodeId].AddServer(request);
+    const response = await this.nodes.get(nodeId)!.AddServer(request);
     return response;
   }
 
@@ -51,15 +52,15 @@ export class MemoryNetwork {
     nodeId: string,
     request: LeaveServer
   ): Promise<MemberShipChangeResponse> {
-    const response = await this.nodes[nodeId].RemoveServer(request);
+    const response = await this.nodes.get(nodeId)!.RemoveServer(request);
     return response;
   }
 
   public async clientQueryToNode(
     nodeId: string,
     query: Query
-  ): Promise<ClientQueryResponse<any>> {
-    const response = this.nodes[nodeId].ClientQuery(query);
+  ): Promise<ClientQueryResponse<string | boolean>> {
+    const response = this.nodes.get(nodeId)!.ClientQuery(query);
     return response;
   }
 
@@ -67,12 +68,12 @@ export class MemoryNetwork {
     nodeId: string,
     request: Command<any>
   ): Promise<ClientRequestResponse> {
-    const response = await this.nodes[nodeId].ClientRequest(request);
+    const response = await this.nodes.get(nodeId)!.ClientRequest(request);
     return response;
   }
 
   
-  public async addServer(nodeId: string, server: MemoryServer) {
-    this.nodes[nodeId] = server;
+  public async addServer(nodeId: string, server: Server) {
+    this.nodes.set(nodeId, server);
   }
 }
