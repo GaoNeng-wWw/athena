@@ -1,10 +1,10 @@
-import type { Command } from "packages/raft/command";
-import type { Raftnode } from "packages/raft/node";
-import type { ClientQueryResponse, ClientRequestResponse, Query } from "packages/raft/query";
-import type { AppendEntryRequest, AppendEntryResponse } from "packages/raft/rpc/AppendEntries";
-import type { AddServer, MemberShipChangeResponse, LeaveServer } from "packages/raft/rpc/membership";
-import type { RequestVote, RequestVoteResponse } from "packages/raft/rpc/RequestVote";
-import type { Server } from "packages/raft/server";
+import type { Command } from "../../command";
+import type { Raftnode } from "../../node";
+import type { ClientQueryResponse, ClientRequestResponse, Query } from "../../query";
+import type { AppendEntryRequest, AppendEntryResponse } from "../../rpc/AppendEntries";
+import type { AddServer, MemberShipChangeResponse, LeaveServer } from "../../rpc/membership";
+import type { RequestVote, RequestVoteResponse } from "../../rpc/RequestVote";
+import type { Server } from "../../server";
 
 export class MemoryServer implements Server {
   async listen(node: Raftnode): Promise<void> {

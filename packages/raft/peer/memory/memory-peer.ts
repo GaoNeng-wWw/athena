@@ -1,10 +1,10 @@
-import type { AppendEntryRequest, AppendEntryResponse } from "packages/raft/rpc/AppendEntries";
-import type { AddServer, MemberShipChangeResponse, LeaveServer } from "packages/raft/rpc/membership";
-import type { RequestVote, RequestVoteResponse } from "packages/raft/rpc/RequestVote";
+import type { AppendEntryRequest, AppendEntryResponse } from "../../rpc/AppendEntries";
+import type { AddServer, MemberShipChangeResponse, LeaveServer } from "../../rpc/membership";
+import type { RequestVote, RequestVoteResponse } from "../../rpc/RequestVote";
 import type { Peer } from "../../node";
 import type { BaseNetwork } from "../network";
-import type { ClientQueryResponse, ClientRequestResponse, Query } from "packages/raft/query";
-import type { Command } from "packages/raft/command";
+import type { ClientQueryResponse, ClientRequestResponse, Query } from "../../query";
+import type { Command } from "../../command";
 
 export class MemoryPeer implements Peer {
     id: string;

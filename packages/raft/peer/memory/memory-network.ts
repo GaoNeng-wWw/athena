@@ -1,8 +1,8 @@
-import type { Command } from "packages/raft/command";
-import type { ClientQueryResponse, ClientRequestResponse, Query } from "packages/raft/query";
-import type { AppendEntryRequest, AppendEntryResponse } from "packages/raft/rpc/AppendEntries";
-import type { AddServer, LeaveServer, MemberShipChangeResponse } from "packages/raft/rpc/membership";
-import type { RequestVote, RequestVoteResponse } from "packages/raft/rpc/RequestVote";
+import type { Command } from "../../command";
+import type { ClientQueryResponse, ClientRequestResponse, Query } from "../../query";
+import type { AppendEntryRequest, AppendEntryResponse } from "../../rpc/AppendEntries";
+import type { AddServer, LeaveServer, MemberShipChangeResponse } from "../../rpc/membership";
+import type { RequestVote, RequestVoteResponse } from "../../rpc/RequestVote";
 import type { MemoryServer } from "./memory-server";
 
 export class MemoryNetwork {
