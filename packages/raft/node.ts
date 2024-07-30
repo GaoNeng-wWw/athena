@@ -1,3 +1,4 @@
+import { setMaxIdleHTTPParsers } from "http";
 import type { Command } from "./command";
 import { CommandType, membershipAddCommand, membershipRemoveCommand, noopCommand } from "./command";
 import type { LogEntry } from "./Log";
@@ -63,7 +64,7 @@ export class Raftnode {
   public vote: number = 0;
   public voteCount: number = 0;
   public factory: (id: string) => Peer
-  constructor(
+  private constructor(
     id: string,
     stateMachine: StateMachine,
     store: BaseStore<any, any>,
@@ -152,6 +153,10 @@ export class Raftnode {
       lastLogIndex,
       lastLog.term
     );
+    if (!this.peers.length){
+      await this.becomeLeader()
+      return;
+    }
     for (const peer of this.peers){
       peer.requestVote(
         request,
@@ -188,7 +193,7 @@ export class Raftnode {
     const term = await this.stateMachine.getCurrentTerm();
     const leaderCommit = this.stateMachine.getCommitIndex();
 
-    for (let i=0;this.peers.length;i++){
+    for (let i=0; i < this.peers.length;i++){
       const peer = this.peers[i];
       const logs = await this.stateMachine.getLog();
       let prevLogTerm = -1;
@@ -208,7 +213,10 @@ export class Raftnode {
         leaderCommit
       )
       if (entries.length) {
-        // 
+        console.log(
+          `${this.id} is about to send log of index ${nextIndex} to node ${peer.peerId}`
+        );
+        console.log(this.stateMachine.getNextIndexes());
       }
       peer.appendEntries(
         request,
@@ -455,16 +463,41 @@ export class Raftnode {
     }
   }
 
-  async start(){
-    await this.server.listen(this);
-    if (this.leader) {
-      await this.stateMachine.appendEntries([
+  static async start(
+    id: string,
+    stateMachine: StateMachine,
+    store: BaseStore<any, any>,
+    server: Server,
+    factory: (id: string) => Peer,
+    electionOptions: ElectionOptions = {
+      min: 150,
+      max: 300
+    },
+    heartBeatOptions: HeartBeatOptions = {
+      min: 100,
+      max: 100
+    },
+    leader: boolean=false,
+  ){
+    await stateMachine.start();
+    if (leader) {
+      await stateMachine.appendEntries([
         {
           term: 0,
-          command: membershipAddCommand(this.id) // 
+          command: membershipAddCommand(id) // 
         }
       ])
     }
+    return new Raftnode(
+      id,
+      stateMachine,
+      store,
+      server,
+      factory,
+      electionOptions,
+      heartBeatOptions,
+      leader
+    )
   }
 
   private addPeer(serverIdentifier: string) {
@@ -563,7 +596,7 @@ export class Raftnode {
 
   stopListen(){
     this.clearTimeout();
-    this.clearHeartbeatInterval
+    this.clearHeartbeatInterval();
   }
 
   private logApplier(

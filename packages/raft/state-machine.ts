@@ -137,9 +137,17 @@ export class LocalStateMachine implements StateMachine {
     if (logs.length) {
       console.log(`${this.nodeId} is appending entries`, logs);
     }
-    const log = await this.db.getData(persistentKeys.LOG);
-    log.push(...logs);
-    await this.db.push(persistentKeys.LOG, log);
+    
+    const _logs =[];
+    try {
+      const log = await this.db.getData(persistentKeys.LOG);
+      if (log.length){
+        _logs.push(log)
+      }
+    } catch {}
+
+    _logs.push(...logs);
+    await this.db.push(persistentKeys.LOG, _logs.flat(Infinity));
   }
 
   ///// Volatile /////

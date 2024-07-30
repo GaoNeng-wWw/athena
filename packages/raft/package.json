@@ -11,6 +11,8 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "fs-extra": "^11.2.0",
+    "node-json-db": "^2.3.0",
     "tsc": "^2.0.4",
     "typescript": "^5.5.4"
   }

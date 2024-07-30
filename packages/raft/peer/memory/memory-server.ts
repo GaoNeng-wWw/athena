@@ -9,6 +9,7 @@ import type { Server } from "../../server";
 export class MemoryServer implements Server {
   async listen(node: Raftnode): Promise<void> {
     this.node = node;
+    console.log(`[MEMORY Server: ${node.id}]: Started`);
   }
   async RequestVote(request: RequestVote): Promise<RequestVoteResponse> {
     const response = await this.node.requestVoteHandler(request);
