@@ -58,7 +58,7 @@ export class MemoryStore implements BaseStore<string, string> {
 
   async hget(hashKey: string, key: string): Promise<string | undefined> {
     const hash = this.store.get(hashKey);
-    return hash.get(key) ?? undefined;
+    return hash?.get?.(key) ?? undefined;
   }
   
   async hdel(hashKey: string, keys: [string]): Promise<void> {

@@ -99,12 +99,14 @@ export class Raftnode {
       clearTimeout(this.electionTimeout);
     }
     this.electionTimeout = setTimeout(async () => {
-      this.becomeCandidate()
+      await this.becomeCandidate()
     }, /*TODO: random in [electionOptions.min, electionOptions.max]*/150);
   }
   private async leaderHeartbeats(){
     this.heartbeatInterval = setInterval(async ()=>{
+      console.log(`${this.id} send heartbeats`)
       await this.sendHeartBeats();
+      console.log(`${this.id} send heartbeats finish`);
     }, /*TODO: random get*/150)
   }
   private async becomeCandidate(){
@@ -181,6 +183,7 @@ export class Raftnode {
       }
       if (res.term > electionTerm) {
         await this.higherTerm(res.term);
+        return;
       }
       if (
         this.vote >= this.quorum() && this.state === State.CANDIDATE
@@ -214,7 +217,7 @@ export class Raftnode {
       )
       if (entries.length) {
         console.log(
-          `${this.id} is about to send log of index ${nextIndex} to node ${peer.peerId}`
+          `${this.id} is about to send log of index ${nextIndex} to node ${peer.id}`
         );
         console.log(this.stateMachine.getNextIndexes());
       }
@@ -450,12 +453,14 @@ export class Raftnode {
   private async applyLogs(){
     const commitIndex = this.stateMachine.getCommitIndex();
     let lastApplied = this.stateMachine.getLastApplied();
-    if (commitIndex > lastApplied) {
-      const logs = await this.stateMachine.getLog();
+    // console.log(`${this.id} is ${this.state} apply logs, ${commitIndex} - ${lastApplied}`)
+    const logs = await this.stateMachine.getLog();
+    if (commitIndex >= lastApplied) {
       const logsToBeApplied = logs.slice(lastApplied + 1);
 
       for (let i = 0; i < logsToBeApplied.length; i++) {
         const log = logsToBeApplied[i];
+        console.log(`${this.id}: ${JSON.stringify(log)}`)
         this.logApplier(log);
         lastApplied += 1;
         this.stateMachine.setLastApplied(lastApplied);
@@ -584,7 +589,7 @@ export class Raftnode {
       return {
         status: true,
         leaderHint: leaderId,
-        response: value === null ? '' : value
+        response: value === null || value === undefined ? '' : value
       }
     }
     return {
@@ -599,7 +604,7 @@ export class Raftnode {
     this.clearHeartbeatInterval();
   }
 
-  private logApplier(
+  private async logApplier(
     logEntry: LogEntry<
       string &
       {key: string, value:string} &
@@ -609,25 +614,26 @@ export class Raftnode {
       {ns: string, values: string[]}
     >
   ){
+    console.log(+new Date(), JSON.stringify(logEntry))
     switch (logEntry.command.type) {
       case CommandType.STORE_SET: {
         const {command} = logEntry;
         const data = command.data as {key: string, value:string};
-        this.store.set(data.key, data.value)
+        await this.store.set(data.key, data.value)
         break;
       }
       case CommandType.STORE_DEL: {
         const data = logEntry.command.data;
-        this.store.del(data.key);
+        await this.store.del(data.key);
         break;
       }
       case CommandType.STORE_HSET: {
         const pairs = logEntry.command.data.pairs;
-        this.store.hset(logEntry.command.data.ns, pairs);
+        await this.store.hset(logEntry.command.data.ns, pairs);
         break;
       }
       case CommandType.STORE_HDEL: {
-        this.store.hdel(logEntry.command.data.ns, logEntry.command.data.keys);
+        await this.store.hdel(logEntry.command.data.ns, logEntry.command.data.keys);
         break;
       }
       case CommandType.NOOP:{
@@ -644,7 +650,7 @@ export class Raftnode {
         break;
       }
       case CommandType.STORE_SSET:{
-        this.store.sdel(
+        await this.store.sdel(
           logEntry.command.data.ns,
           logEntry.command.data.values
         )
@@ -652,7 +658,7 @@ export class Raftnode {
       }
       case CommandType.STORE_SEDEL:{
         const sdelValues = logEntry.command.data.values;
-        this.store.sdel(logEntry.command.data.ns, sdelValues);
+        await this.store.sdel(logEntry.command.data.ns, sdelValues);
         break;
       }
       default:{

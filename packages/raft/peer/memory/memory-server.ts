@@ -31,7 +31,7 @@ export class MemoryServer implements Server {
     return await this.node.handleClientReq(request);
   }
   async ClientQuery(query: Query): Promise<ClientQueryResponse<string|boolean>> {
-    return this.node.handleClientQuery(query);
+    return await this.node.handleClientQuery(query);
   }
   private node!: Raftnode;
 }

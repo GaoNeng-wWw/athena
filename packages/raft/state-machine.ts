@@ -135,19 +135,19 @@ export class LocalStateMachine implements StateMachine {
 
   public async appendEntries(logs: LogEntry[]): Promise<void> {
     if (logs.length) {
-      console.log(`${this.nodeId} is appending entries`, logs);
+      console.log(`${this.nodeId} is appending entries`, JSON.stringify(logs, null, 2))
     }
     
     const _logs =[];
     try {
       const log = await this.db.getData(persistentKeys.LOG);
       if (log.length){
-        _logs.push(log)
+        _logs.push(...log)
       }
     } catch {}
 
     _logs.push(...logs);
-    await this.db.push(persistentKeys.LOG, _logs.flat(Infinity));
+    await this.db.push(persistentKeys.LOG, _logs);
   }
 
   ///// Volatile /////

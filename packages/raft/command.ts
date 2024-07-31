@@ -19,12 +19,6 @@ export class Command<T=string> {
     this.type = type;
     this.data = data;
   }
-  toJSON(){
-    return {
-      type: this.type,
-      data: this.data
-    }
-  }
 }
 
 export const noopCommand = (id: string) => {

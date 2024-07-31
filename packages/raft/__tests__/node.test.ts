@@ -8,6 +8,7 @@ import { existsSync, readdirSync, rmdirSync, rmSync, statSync, unlinkSync } from
 import { MEMBERSHIP_CHANGE_RESPONSE_STATUS } from "../rpc/membership";
 import { join } from "path";
 import { Command, CommandType } from "../command";
+import { createNode } from "./createNode";
 
 const sleep = (time: number) => {
   return new Promise((resolve)=>{
@@ -17,8 +18,8 @@ const sleep = (time: number) => {
   })
 }
 beforeAll(()=>{
-  if (existsSync('test')){
-    rmSync('test',{ recursive: true, force: true, })
+  if (existsSync('testdb')){
+    rmSync('testdb',{ recursive: true, force: true, })
   }
 })
 describe('Node', () => {
@@ -163,28 +164,7 @@ describe('Node', () => {
 
     nodes.forEach(node=>node.stopListen());
   }, {timeout: 60 * 1000})
-  const createNode = async (id: string,leader=false) => {
-    const state = new LocalStateMachine(id, 'test/mem');
-    const server = new MemoryServer();
-    const network = new MemoryNetwork();
-    const node = await Raftnode.start(
-      id,
-      state,
-      new MemoryStore(),
-      server,
-      (id) => new MemoryPeer(id, network),
-      {
-        min: 150,
-        max: 300
-      },
-      {
-        min: 150,
-        max: 300
-      },
-      leader
-    )
-    return {state,server,network,node};
-  }
+
   it('should not be replicated twice', async () => {
     const nodes = [
       await createNode('NODE1',true),
