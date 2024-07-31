@@ -1,4 +1,9 @@
-import {www} from '@gaonengwww/eslint-config';
+import {www} from '@gaonengwww/eslint-config'
+
 export default www({
-    typescript: true
+  typescript: {
+    overrides: {
+      semi: 'error'
+    }
+  }
 })
