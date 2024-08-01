@@ -1,15 +1,13 @@
-use std::fmt::Display;
+use std::collections::BTreeMap;
+use std::{fmt::Display, sync::Arc};
 use std::io::Cursor;
-use std::path::Path;
-use std::sync::Arc;
-
 use openraft::Config;
-use tokio::net::TcpListener;
-use tokio::task;
-
+use tokio::sync::RwLock;
 
 use crate::store::{Request, Response};
 mod store;
+mod network;
+mod raft;
 
 fn main() {
     println!("Hello, world!");
@@ -54,4 +52,15 @@ pub mod typ {
     pub type InitializeError = openraft::error::InitializeError<TypeConfig>;
 
     pub type ClientWriteResponse = openraft::raft::ClientWriteResponse<TypeConfig>;
+}
+
+pub type OpenRaft = openraft::Raft<TypeConfig>;
+
+pub struct App {
+    id:NodeId,
+    api_addr: String,
+    rpc_addr: String,
+    raft: OpenRaft,
+    kv: Arc<RwLock<BTreeMap<String, String>>>,
+    conf: Arc<Config>
 }
