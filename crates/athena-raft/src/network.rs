@@ -1,5 +1,4 @@
 use std::any::Any;
-use std::fmt::format;
 use std::fmt::Display;
 
 use openraft::error::InstallSnapshotError;
@@ -21,7 +20,7 @@ use serde::de::DeserializeOwned;
 use toy_rpc::pubsub::AckModeNone;
 use toy_rpc::Client;
 
-use crate::raft::RaftClientStub;
+use crate::raft::RaftNodeClientStub;
 use crate::Node;
 use crate::NodeId;
 use crate::TypeConfig;
@@ -114,14 +113,13 @@ impl RaftNetwork<TypeConfig> for NetworkConnection {
         _option: RPCOption,
     ) -> Result<AppendEntriesResponse<TypeConfig>, RPCError<TypeConfig, RaftError<TypeConfig>>> {
         let c = self.client().await?;
-        let raft: crate::raft::RaftClient<AckModeNone> = c.raft();
+        let raft: crate::raft::RaftNodeClient<AckModeNone> = c.raft_node();
         raft.append(req)
             .await
             .map_err(|e| to_error(e, self.target))
     }
 
     #[doc = " Send an InstallSnapshot RPC to the target."]
-    #[cfg(not(feature = "generic-snapshot-data"))]
     async fn install_snapshot(
         &mut self,
         req: InstallSnapshotRequest<TypeConfig>,
@@ -129,7 +127,7 @@ impl RaftNetwork<TypeConfig> for NetworkConnection {
     ) -> Result<InstallSnapshotResponse<TypeConfig>, RPCError<TypeConfig, RaftError<TypeConfig, InstallSnapshotError>>>{
         self.client()
             .await?
-            .raft()
+            .raft_node()
             .snapshot(req)
             .await
             .map_err(|e| to_error(e, self.target))
@@ -143,7 +141,7 @@ impl RaftNetwork<TypeConfig> for NetworkConnection {
     ) -> Result<VoteResponse<TypeConfig>, RPCError<TypeConfig, RaftError<TypeConfig>>>{
         self.client()
             .await?
-            .raft()
+            .raft_node()
             .vote(rpc)
             .await
             .map_err(|e| to_error(e, self.target))
