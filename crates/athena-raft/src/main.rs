@@ -8,6 +8,7 @@ use crate::store::{Request, Response};
 mod store;
 mod network;
 mod raft;
+mod client;
 
 fn main() {
     println!("Hello, world!");

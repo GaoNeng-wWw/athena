@@ -598,7 +598,7 @@ impl RaftLogStorage<TypeConfig> for LogStore {
     }    
 }
 
-pub async  fn create_store<P: AsRef<Path>>(
+pub async fn create_store<P: AsRef<Path>>(
     db_path: P
 ) -> (LogStore, StateMachineStore){
     let mut opts = Options::default();
