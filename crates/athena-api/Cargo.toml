@@ -1,0 +1,13 @@
+[package]
+name = "athena-api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+axum = { version = "0.7.5", features = ["macros"] }
+serde = { version = "1.0.204", features = ["derive"] }
+tokio = { version = "1.39.2", features = ["full"] }
+tower = "0.4.13"
+tracing = "0.1.40"
+tracing-subscriber = "0.3.18"
+athena-raft ={ path = "../athena-raft" }

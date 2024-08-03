@@ -3,12 +3,12 @@ use std::{fmt::Display, sync::Arc};
 use std::io::Cursor;
 use openraft::Config;
 use tokio::sync::RwLock;
-
 use crate::store::{Request, Response};
-mod store;
-mod network;
-mod raft;
-mod client;
+
+pub mod store;
+pub mod network;
+pub mod raft;
+pub mod client;
 
 fn main() {
     println!("Hello, world!");
@@ -57,11 +57,12 @@ pub mod typ {
 
 pub type OpenRaft = openraft::Raft<TypeConfig>;
 
-pub struct App {
-    id:NodeId,
-    api_addr: String,
-    rpc_addr: String,
-    raft: OpenRaft,
-    kv: Arc<RwLock<BTreeMap<String, String>>>,
-    conf: Arc<Config>
+#[derive(Clone)]
+pub struct RaftApp {
+    pub id:NodeId,
+    pub api_addr: String,
+    pub rpc_addr: String,
+    pub raft: OpenRaft,
+    pub kv: Arc<RwLock<BTreeMap<String, String>>>,
+    pub conf: Arc<Config>
 }

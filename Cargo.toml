@@ -6,4 +6,4 @@ edition = "2021"
 [dependencies]
 
 [workspace]
-members = ["crates/athena-raft"]
+members = [ "crates/athena-api","crates/athena-raft" ]
