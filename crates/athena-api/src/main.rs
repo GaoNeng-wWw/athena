@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use athena_raft::RaftApp;
-use axum::routing::get;
+use axum::routing::{get, post};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod node;
@@ -30,6 +30,7 @@ async fn main(){
         })
     )
     .route("/node", get(node::get_nodes))
+    .route("/node", post(node::add_node))
     .with_state(raft);
     axum::serve(listener, app).await.unwrap();
     let _ = handle.await;
