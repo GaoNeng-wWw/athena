@@ -134,6 +134,7 @@ version = "0.1.0"
 dependencies = [
  "athena-raft",
  "axum",
+ "openraft 0.9.13",
  "serde",
  "tokio",
  "tower",
@@ -146,7 +147,7 @@ name = "athena-raft"
 version = "0.1.0"
 dependencies = [
  "byteorder",
- "openraft",
+ "openraft 0.10.0",
  "reqwest",
  "rocksdb",
  "serde",
@@ -1306,6 +1307,27 @@ checksum = "3fdb12b2476b595f9358c5161aa467c2438859caa136dec86c26fdd2efe17b92"
 
 [[package]]
 name = "openraft"
+version = "0.9.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "425a5a830e64ef5223ff95d49d538004925ec3f7f1f68548a4f5cc90e75afdcf"
+dependencies = [
+ "anyerror",
+ "byte-unit",
+ "clap",
+ "derive_more",
+ "futures",
+ "maplit",
+ "openraft-macros 0.9.13",
+ "rand",
+ "thiserror",
+ "tokio",
+ "tracing",
+ "tracing-futures",
+ "validit",
+]
+
+[[package]]
+name = "openraft"
 version = "0.10.0"
 source = "git+https://github.com/datafuselabs/openraft.git?branch=release-0.10#3023a018b044b454944c74883902895795a9e6f5"
 dependencies = [
@@ -1315,7 +1337,7 @@ dependencies = [
  "derive_more",
  "futures",
  "maplit",
- "openraft-macros",
+ "openraft-macros 0.10.0",
  "rand",
  "serde",
  "thiserror",
@@ -1323,6 +1345,19 @@ dependencies = [
  "tracing",
  "tracing-futures",
  "validit",
+]
+
+[[package]]
+name = "openraft-macros"
+version = "0.9.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8783d46ac9462585c914f7cdcdc7f6df1f70d9dd5d5b7506b86fd7b20916c058"
+dependencies = [
+ "chrono",
+ "proc-macro2",
+ "quote",
+ "semver",
+ "syn 2.0.58",
 ]
 
 [[package]]

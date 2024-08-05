@@ -1,11 +1,8 @@
-use std::sync::Arc;
+use std::{borrow::Borrow, sync::Arc};
 
+use athena_raft::Node;
 use axum::Json;
 use serde::{Deserialize, Serialize};
-
-pub struct GetNodesParam {
-    page: Option<u64>
-}
 
 #[derive(Deserialize,Serialize)]
 pub struct Members {
@@ -34,17 +31,14 @@ pub async fn get_nodes(
 }
 
 #[doc = "Add node to cluster"]
-pub fn add_node(){
-    todo!();
-}
-
-#[doc = "Remove node to clear"]
-pub fn remove_node(){
-    todo!()
-}
-
-#[doc = "update node info by node id or rpc_addr"]
-#[doc = "if exists will return new node config else will retrun 404 status code"]
-pub fn patch_node(){
-    todo!()
+pub async fn add_node(
+    axum::extract::State(app): axum::extract::State<Arc<athena_raft::RaftApp>>,
+    axum::Json(body): axum::Json<Members>
+) -> Json<Node>{
+    let node = Node {
+        rpc_addr: body.rpc_addr,
+        api_addr: body.api_addr
+    };
+    app.raft.add_learner(body.id, node.clone(), true).await.unwrap();
+    Json(node)
 }

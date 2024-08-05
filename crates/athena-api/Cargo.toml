@@ -11,3 +11,4 @@ tower = "0.4.13"
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
 athena-raft ={ path = "../athena-raft" }
+openraft = "0.9.13"
